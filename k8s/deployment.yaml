@@ -1,0 +1,157 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: server-monitor
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: server-monitor-config
+  namespace: server-monitor
+data:
+  DATABASE_URL: "postgresql://postgres:postgres@server-monitor-db:5432/monitor"
+  API_PORT: "8000"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: server-monitor-db
+  namespace: server-monitor
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+  selector:
+    app: server-monitor-db
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: server-monitor-db
+  namespace: server-monitor
+spec:
+  serviceName: server-monitor-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: server-monitor-db
+  template:
+    metadata:
+      labels:
+        app: server-monitor-db
+    spec:
+      containers:
+        - name: db
+          image: timescale/timescaledb:latest-pg15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: postgres
+            - name: POSTGRES_DB
+              value: monitor
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: db-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: server-monitor-api
+  namespace: server-monitor
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+  selector:
+    app: server-monitor-api
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-monitor-api
+  namespace: server-monitor
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: server-monitor-api
+  template:
+    metadata:
+      labels:
+        app: server-monitor-api
+    spec:
+      containers:
+        - name: api
+          image: server-monitor-api:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: server-monitor-config
+                  key: DATABASE_URL
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: server-monitor-frontend
+  namespace: server-monitor
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+  selector:
+    app: server-monitor-frontend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-monitor-frontend
+  namespace: server-monitor
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: server-monitor-frontend
+  template:
+    metadata:
+      labels:
+        app: server-monitor-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: server-monitor-frontend:latest
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"

@@ -1,0 +1,72 @@
+agents:
+  # 架构Agent - 设计系统架构、数据库schema、API规范
+  - role: "System Architect"
+    goal: "Design a scalable and robust server monitoring system architecture"
+    backstory: |
+      You are an experienced system architect with 15+ years in designing 
+      distributed monitoring systems. You have deep knowledge of system design, 
+      database schemas, API design patterns, and cloud-native architectures.
+    tasks:
+      - name: "Design System Architecture"
+        description: "Create system_architecture.md with detailed architecture design"
+        expected_output: "system_architecture.md"
+
+  # 后端Agent - 实现指标采集器、API服务、数据库模型
+  - role: "Backend Engineer"
+    goal: "Implement robust backend services for server monitoring"
+    backstory: |
+      You are a senior Python backend engineer specializing in FastAPI, 
+      data collection systems, and PostgreSQL/TimescaleDB. You write 
+      clean, efficient, and well-documented code.
+    tasks:
+      - name: "Implement Collectors"
+        description: "Create system metrics collectors (CPU, Memory, Disk, Network, Process)"
+        expected_output: "collectors/*.py"
+      - name: "Implement API Service"
+        description: "Create FastAPI backend service with RESTful endpoints"
+        expected_output: "api/main.py"
+      - name: "Implement Storage Layer"
+        description: "Create database models and storage layer"
+        expected_output: "storage/*.py"
+
+  # 前端Agent - 实现监控Dashboard界面
+  - role: "Frontend Engineer"
+    goal: "Create an intuitive and beautiful monitoring dashboard"
+    backstory: |
+      You are a senior frontend engineer with expertise in React, TypeScript, 
+      and data visualization. You create clean, responsive, and user-friendly 
+      interfaces.
+    tasks:
+      - name: "Initialize React Project"
+        description: "Set up React project with TypeScript and dependencies"
+        expected_output: "frontend/package.json"
+      - name: "Implement Dashboard UI"
+        description: "Create monitoring dashboard with real-time data display"
+        expected_output: "frontend/src/App.tsx"
+      - name: "Implement Visualization"
+        description: "Create charts and visualization components"
+        expected_output: "frontend/src/components/*.tsx"
+
+  # 测试Agent - 编写单元测试、集成测试
+  - role: "QA Engineer"
+    goal: "Ensure high quality through comprehensive testing"
+    backstory: |
+      You are an experienced QA engineer specializing in Python testing, 
+      test automation, and CI/CD pipelines. You believe in thorough testing 
+      and clean test coverage.
+    tasks:
+      - name: "Write Unit Tests"
+        description: "Create unit tests for all backend modules"
+        expected_output: "tests/test_*.py"
+      - name: "Write Integration Tests"
+        description: "Create integration tests for API endpoints"
+        expected_output: "tests/test_api.py"
+
+# 多Agent协作配置
+crew:
+  process: "parallel"  # 并行执行
+  verbose: true
+  memory: true
+  cache: true
+  max_iterations: 10
+  max_rpm: 60
